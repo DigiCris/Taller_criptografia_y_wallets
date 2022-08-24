@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- saved from url=(0026)http://localhost:3000/keys -->
+<html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><meta name="description" content="Public / private key pair demo in a browser."><meta name="author" content="Anders Brownworth"><link rel="icon" href="http://localhost:3000/favicon.ico"><title>Blockchain Demo: Public / Private Keys &amp; Signing </title><link rel="stylesheet" href="./priv_pub_key_files/bootstrap.min.css"><link rel="stylesheet" href="./priv_pub_key_files/public-key-private-key.css"><script src="./priv_pub_key_files/jquery.min.js.descarga"></script><script src="./priv_pub_key_files/popper.min.js.descarga"></script><script src="./priv_pub_key_files/bootstrap.min.js.descarga"></script><script src="./priv_pub_key_files/js.cookie.min.js.descarga"></script><script src="./priv_pub_key_files/BigInteger.min.js.descarga"></script><script src="./priv_pub_key_files/Buffer.js.descarga"></script><script src="./priv_pub_key_files/elliptic.js.descarga"></script><script src="./priv_pub_key_files/spin.min.js.descarga"></script><style type="text/css"></style><script src="./priv_pub_key_files/ladda.min.js.descarga"></script><script src="./priv_pub_key_files/sha256.js.descarga"></script><script src="./priv_pub_key_files/blockchain.js.descarga"></script></head><body><div class="container"><div class="card"><h4 class="card-header">Public / Private Key Pairs </h4><div class="card-body"><form class="form-horizontal"><div class="form-group"><label class="control-label" for="data">Private Key </label><div class="input-group"><input class="form-control" id="privateKey" aria-label="Private Key" type="number"><span class="input-group-btn"><button class="btn btn-secondary" id="randomButton" type="button">Random </button></span></div></div><div class="form-group"><label class="control-label" for="data">Public Key </label><input class="form-control" id="publicKey" disabled=""></div></form></div></div></div><script>var EC = elliptic.elliptic().ec;
+var ec = new EC('secp256k1');
+
+var keypair = ec.genKeyPair();
+if (Cookies.get('privateKey')) {
+  keypair = ec.keyFromPrivate(Cookies.get('privateKey'));
+}
+
+function update() {
+  var prv = keypair.getPrivate('hex');
+  var pub = keypair.getPublic('hex');
+  $('#privateKey').val(bigInt(prv, 16).toString());
+  $('#publicKey').val(pub);
+  Cookies.set('privateKey', prv.toString());
+  Cookies.set('publicKey', pub.toString());
+}
+
+function random() {
+  keypair = ec.genKeyPair();
+  update();
+}
+
+$(function() {
+  $('#randomButton').click(random);
+  $('#privateKey').bind('keyup', function() {
+    $('#privateKey').val($('#privateKey').val().replace(/\D/g, ''));
+    keypair = ec.keyFromPrivate(bigInt($('#privateKey').val()).toString(16));
+    update();
+  });
+  update();
+});</script></body></html>

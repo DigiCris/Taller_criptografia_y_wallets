@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)http://localhost:3000/signatures -->
+<html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><meta name="description" content="Public / private key pair demo in a browser."><meta name="author" content="Anders Brownworth"><link rel="icon" href="http://localhost:3000/favicon.ico"><title>Blockchain Demo: Public / Private Keys &amp; Signing </title><link rel="stylesheet" href="./verify_files/bootstrap.min.css"><link rel="stylesheet" href="./verify_files/public-key-private-key.css"><script src="./verify_files/jquery.min.js.descarga"></script><script src="./verify_files/popper.min.js.descarga"></script><script src="./verify_files/bootstrap.min.js.descarga"></script><script src="./verify_files/js.cookie.min.js.descarga"></script><script src="./verify_files/BigInteger.min.js.descarga"></script><script src="./verify_files/Buffer.js.descarga"></script><script src="./verify_files/elliptic.js.descarga"></script><script src="./verify_files/spin.min.js.descarga"></script><style type="text/css"></style><script src="./verify_files/ladda.min.js.descarga"></script><script src="./verify_files/sha256.js.descarga"></script><script src="./verify_files/blockchain.js.descarga"></script></head><body><div class="container"><div class="card"><div class="card-header"><h4>Signatures </h4><ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist"><li class="nav-item"><a class="nav-link" id="sign-tab" data-toggle="tab" href="http://localhost:3000/signatures#sign" role="tab" aria-controls="sign" aria-selected="false">Sign </a></li><li class="nav-item"><a class="nav-link active" id="verify-tab" data-toggle="tab" href="http://localhost:3000/signatures#verify" role="tab" aria-controls="verify" aria-selected="true">Verify </a></li></ul></div><div class="card-body" id="card"><div class="tab-content" id="myTabContent"><div class="tab-pane" id="sign" role="tabpanel" aria-labelledby="sign-tab"><form class="form-horizontal"><div class="form-group"><label class="control-label" for="data">Message </label><textarea class="form-control" id="sign-message" rows="5" aria-label="Message"></textarea></div><div class="form-group"><label class="control-label" for="data">Private Key </label><input class="form-control" id="privateKey" type="number"></div><div class="form-group"><button class="btn btn-block btn-primary" id="sign-button" type="button">Sign </button></div><div class="form-group"><label class="control-label" for="data">Message Signature </label><input class="form-control" id="sign-signature" disabled=""></div></form></div><div class="tab-pane active" id="verify" role="tabpanel" aria-labelledby="verify-tab"><form class="form-horizontal"><div class="form-group"><label class="control-label" for="data">Message </label><textarea class="form-control" id="verify-message" rows="5" aria-label="Message"></textarea></div><div class="form-group"><label class="control-label" for="data">Public Key </label><input class="form-control" id="publicKey"></div><div class="form-group"><label class="control-label" for="data">Signature </label><input class="form-control" id="verify-signature"></div><div class="form-group"><button class="btn btn-block btn-primary" id="verify-button" type="button">Verify </button></div></form></div></div></div></div></div><script>var EC = elliptic.elliptic().ec;
+var ec = new EC('secp256k1');
+
+var keypair = ec.genKeyPair();
+if (Cookies.get('privateKey')) {
+  keypair = ec.keyFromPrivate(Cookies.get('privateKey'));
+}
+
+function update() {
+  var prv = keypair.getPrivate('hex');
+  var pub = keypair.getPublic('hex');
+  $('#privateKey').val(bigInt(prv, 16).toString());
+  $('#publicKey').val(pub);
+  Cookies.set('privateKey', prv.toString());
+  Cookies.set('publicKey', pub);
+}
+
+function resetVerifier() {
+  $('#card').removeClass('alert-success');
+  $('#card').removeClass('alert-danger');
+}
+
+$(function() {
+  $('#sign-button').click(function() {
+    var binaryMessage = buffer.Buffer.from(CryptoJS.SHA256($('#sign-message').val()).toString(CryptoJS.enc.Hex));
+    var hexSignature = buffer.Buffer.from(keypair.sign(binaryMessage).toDER()).toString('hex');
+    $('#sign-signature').val(hexSignature);
+    $('#verify-signature').val(hexSignature);
+    update();
+    resetVerifier();
+  });
+  $('#verify-button').click(function() {
+    // verify by using only the public key
+    $('#publicKey').val($('#publicKey').val().replace(/[^0-9a-fA-F]/g, ''));
+    var tmpKey;
+    try {
+      tmpKey = ec.keyFromPublic($('#publicKey').val(), 'hex');
+      var binaryMessage = buffer.Buffer.from(CryptoJS.SHA256($('#verify-message').val()).toString(CryptoJS.enc.Hex));
+      if (tmpKey.verify(binaryMessage, $('#verify-signature').val())) {
+        $('#card').addClass('alert-success');
+      }
+      else {
+        $('#card').addClass('alert-danger');
+      }
+    }
+    catch(e) {
+      $('#card').addClass('alert-danger');
+    }
+  });
+  $('#sign-signature').bind('keyup', function() {
+    resetVerifier();
+  });
+  $('#sign-message').bind('keyup', function() {
+    resetVerifier();
+  });
+  $('#verify-signature').bind('keyup', function() {
+    resetVerifier();
+  });
+  $('#verify-message').bind('keyup', function() {
+    resetVerifier();
+  });
+  $('#publicKey').bind('keyup', function() {
+    resetVerifier();
+  });
+  $('#privateKey').bind('keyup', function() {
+    $('#privateKey').val($('#privateKey').val().replace(/\D/g, ''));
+    keypair = ec.keyFromPrivate(bigInt($('#privateKey').val()).toString(16));
+    resetVerifier();
+    update();
+  });
+  if (Cookies.get('message')) {
+    $('#sign-message').val(Cookies.get('message'));
+    $('#verify-message').val(Cookies.get('message'));
+  }
+  $('#sign-message').bind('keyup', function() {
+    Cookies.set('message', $('#sign-message').val());
+    $('#verify-message').val($('#sign-message').val());
+  });
+  $('#verify-message').bind('keyup', function() {
+    Cookies.set('message', $('#verify-message').val());
+    $('#sign-message').val($('#verify-message').val());
+  });
+  $('#myTab').on('shown.bs.tab', function (e) {
+    resetVerifier();
+  });
+  update();
+});</script></body></html>
